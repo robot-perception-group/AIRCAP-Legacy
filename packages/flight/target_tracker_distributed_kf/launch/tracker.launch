@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<launch>
+
+    <arg name="robotID" default="1"/>
+    <arg name="numRobots" default="1"/>
+    <arg name="namespace" default="machine_$(arg robotID)"/>
+
+    <arg name="cache_size" default="20"/>
+    <arg name="pub_topic" default="target_tracker/pose"/>
+    <arg name="offset_topic" default="target_tracker/offset"/>
+    <arg name="pose_topic" default="pose"/>
+
+    <arg name="reset_time_threshold" default="10"/>  <!--How long to wait before resetting if not receiving new measurements-->
+
+    <group ns="$(arg namespace)">
+        <arg name="name" value="target_tracker_kf"/>
+        <node name="$(arg name)" pkg="target_tracker_distributed_kf" type="target_tracker_distributed_kf_node" output="screen">
+
+            <param name="robotID" value="$(arg robotID)" type="int"/>
+            <param name="numRobots" value="$(arg numRobots)" type="int"/>
+            <param name="measurement_topic_suffix" value="object_detections/projected_to_world" type="string"/>
+
+            <param name="reset_time_threshold" value="$(arg reset_time_threshold)" type="double"/>
+
+            <param name="cache_size" value="$(arg cache_size)" type="int"/>
+            <param name="pub_topic" value="$(arg pub_topic)" type="string"/>
+            <param name="offset_topic" value="$(arg offset_topic)" type="string"/>
+            <param name="pose_topic" value="$(arg pose_topic)" type="string"/>
+
+	        <rosparam command="load" file="$(find target_tracker_distributed_kf)/cfg/tracker_configurable_parameters.yaml"/>
+        </node>
+    </group>
+
+</launch>
