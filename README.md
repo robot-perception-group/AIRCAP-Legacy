@@ -3,6 +3,7 @@ AIRCAP: Aerial Outdoor Motion Capture
 
 (MAVOCAP: [Micro Aerial Vehicles-based Outdoor motion CAPture])
 
+Webpage: [http://aircap.is.tuebingen.mpg.de](http://aircap.is.tuebingen.mpg.de)
 
 # Public Code Repository
 
@@ -21,10 +22,10 @@ See: https://www.gnu.org/licenses/gpl-3.0.en.html
 
 ROS Packages:
 
-/packages/flight -- mandatory packages needed for/on aerial vehicles
-/packages/optional -- packages required for specific hardware (camera interface modules)
-/packages/replay -- packages needed to replay data on the ground
-/scrips/ -- start and stop scripts to run everything locally and remotely - see readme.txt in that directory
+* /packages/flight -- mandatory packages needed for/on aerial vehicles
+* /packages/optional -- packages required for specific hardware (camera interface modules)
+* /packages/replay -- packages needed to replay data on the ground
+* /scrips/ -- start and stop scripts to run everything locally and remotely - see readme.txt in that directory
 
 
 # Compiling
@@ -114,21 +115,21 @@ Like everything else use it at your own risk. You should always have means for m
 What the planner does is:
  * Listens to /machine_&lt;ID&gt;/pose for ALL robots
  * Listens to /machine_&lt;ID&gt;/target_tracker/target for the current person location estimate.
- * Exports Waypoint to fly to into /machine_&lt;ID&gt;/command
+ * Exports Waypoint to fly to into /machine_&lt;ID&gt;/command <br/>
 Desired behaviour: All robots should keep a minimum distance from each other (implemented via potential field) and
 at a given distance to the tracked person, at a given altitude.
 
 
 # Additional Packages:
 
-/packages/flight/CMakeModules -- compilation helper macros
-/packages/flight/generic_potential_field -- used by nmpc_planner
-/packages/flight/pose_cov_ops_interface -- used by projection_models
-/packages/flight/uav_msgs -- ROS messages used by everything
-/packages/optional/basler_image_capture -- camera interface and video recording module for certain basler cameras
-/packages/optional/ptgrey_image_capture -- camara interface and video recording module for FLIR Blackfly cameras
-/packages/optional/gcsa_visualization -- Python scripts to create additional ROS messages for rviz visualization
-/packages/replay/video_replay_only -- replays AVI files and timestamp files created by the basler and ptgrey video modules back into ROS
+* /packages/flight/CMakeModules -- compilation helper macros
+* /packages/flight/generic_potential_field -- used by nmpc_planner
+* /packages/flight/pose_cov_ops_interface -- used by projection_models
+* /packages/flight/uav_msgs -- ROS messages used by everything
+* /packages/optional/basler_image_capture -- camera interface and video recording module for certain basler cameras
+* /packages/optional/ptgrey_image_capture -- camara interface and video recording module for FLIR Blackfly cameras
+* /packages/optional/gcsa_visualization -- Python scripts to create additional ROS messages for rviz visualization
+* /packages/replay/video_replay_only -- replays AVI files and timestamp files created by the basler and ptgrey video modules back into ROS
 
 
 
