@@ -394,7 +394,6 @@ void DistributedKF3D::publishStateAndCov(const CacheElement &elem) {
 
   targetPub_.publish(msg_);
 
-/*
   msg_.pose.pose.position.x = elem.state[6];
   msg_.pose.pose.position.y = elem.state[7];
   msg_.pose.pose.position.z = elem.state[8];
@@ -406,7 +405,11 @@ void DistributedKF3D::publishStateAndCov(const CacheElement &elem) {
   msg_.pose.covariance[1 * 6 + 2] = elem.cov(7 * 9 + 8);
   msg_.pose.covariance[2 * 6 + 0] = elem.cov(8 * 9 + 6);
   msg_.pose.covariance[2 * 6 + 1] = elem.cov(8 * 9 + 7);
-  msg_.pose.covariance[2 * 6 + 2] = elem.cov(8 * 9 + 8);*/
+  msg_.pose.covariance[2 * 6 + 2] = elem.cov(8 * 9 + 8);
+/*
+  // This code would publish a zero offset with static variance regardless of
+  // tracked offset state, as such effectively disabling offset correction and
+  // reverting to previous behaviour
   msg_.pose.pose.position.x = 0;
   msg_.pose.pose.position.y = 0;
   msg_.pose.pose.position.z = 0;
@@ -419,6 +422,7 @@ void DistributedKF3D::publishStateAndCov(const CacheElement &elem) {
   msg_.pose.covariance[2 * 6 + 0] = 0;
   msg_.pose.covariance[2 * 6 + 1] = 0;
   msg_.pose.covariance[2 * 6 + 2] = 2;
+*/
 
   offsetPub_.publish(msg_);
 
