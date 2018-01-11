@@ -73,6 +73,12 @@ navigation.
 
 All Poses are in NED (north east down) coordinate frame.
 
+## tf_from_uav_pose
+
+This node provides static transformations between various frames such as camera
+position relative to vehicle position, or NED world frame relative to ROS ENU
+reference frame.
+
 
 ## model_distance_from_height
 
