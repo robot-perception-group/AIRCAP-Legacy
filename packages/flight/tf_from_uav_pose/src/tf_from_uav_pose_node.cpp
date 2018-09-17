@@ -16,7 +16,10 @@ tfFromUAVPose::tfFromUAVPose() {
 
     std::string
             poseTopicName{"pose"},
-            stdPoseTopicName{"pose/std"},
+            rawPoseTopicName{"pose/raw"},
+            stdPoseTopicName{"pose/corr/std"},
+            stdRawPoseTopicName{"pose/raww/std"},
+            throttledPoseTopicName{"throttledPose"},
             machineFrameID{"machine_1_base_link"},
             worldFrameID{"world"},
             worldENUFrameID{"world_ENU"},
@@ -26,7 +29,10 @@ tfFromUAVPose::tfFromUAVPose() {
 
     // Parameters, with some default values
     pnh_.getParam("poseTopicName", poseTopicName);
+    pnh_.getParam("rawPoseTopicName", rawPoseTopicName);
     pnh_.getParam("stdPoseTopicName", stdPoseTopicName);
+    pnh_.getParam("stdRawPoseTopicName", stdRawPoseTopicName);
+    pnh_.getParam("throttledPoseTopicName", throttledPoseTopicName);
     pnh_.getParam("machineFrameID", machineFrameID);
     pnh_.getParam("worldFrameID", worldFrameID);
     pnh_.getParam("worldENUFrameID", worldENUFrameID);
@@ -64,6 +70,8 @@ tfFromUAVPose::tfFromUAVPose() {
     pnh_.getParam("covarianceX", added_covariance_.at(0));
     pnh_.getParam("covarianceY", added_covariance_.at(1));
     pnh_.getParam("covarianceZ", added_covariance_.at(2));
+
+    pnh_.getParam("throttleRate", throttleRate_);
 
     // Prepare TF Messages
     // TF from world to machine
@@ -159,8 +167,18 @@ tfFromUAVPose::tfFromUAVPose() {
     stdPose_.header.frame_id = worldFrameID;
     stdPosePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(stdPoseTopicName, 10);
 
+    // Advertise std poses
+    stdRawPose_.header.frame_id = worldFrameID;
+    stdRawPosePub_ = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(stdRawPoseTopicName, 10);
+
+    // Advertise throttled poses
+    throttledPose_.header.frame_id = worldFrameID;
+    throttledPose_.header.stamp = ros::Time::now();
+    throttledPosePub_ = nh_.advertise<geometry_msgs::PoseStamped>(throttledPoseTopicName, 10);
+
     // Subscribe to poses
     poseSub_ = nh_.subscribe(poseTopicName, 10, &tfFromUAVPose::poseCallback, this);
+    rawPoseSub_ = nh_.subscribe(rawPoseTopicName, 10, &tfFromUAVPose::rawPoseCallback, this);
 }
 
 void tfFromUAVPose::poseCallback(const uav_msgs::uav_pose::ConstPtr &msg) {
@@ -191,6 +209,18 @@ void tfFromUAVPose::poseCallback(const uav_msgs::uav_pose::ConstPtr &msg) {
     // Publish std pose msg
     stdPosePub_.publish(stdPose_);
 
+    ros::Duration timediff(msg->header.stamp-throttledPose_.header.stamp);
+    if ((1.0/timediff.toSec()) <=throttleRate_) {
+        // Copy contents to throttle pose msg
+        throttledPose_.header.stamp = msg->header.stamp;
+        throttledPose_.pose.position = msg->position;
+        throttledPose_.pose.orientation = msg->orientation;
+
+
+        // Publish throttle pose msg
+        throttledPosePub_.publish(throttledPose_);
+    }
+
     // Copy contents to tf msgs
     tfPose_.header.stamp = msg->header.stamp;
 
@@ -208,12 +238,44 @@ void tfFromUAVPose::poseCallback(const uav_msgs::uav_pose::ConstPtr &msg) {
         tfBroadcaster_->sendTransform(tfPose_);
 }
 
+void tfFromUAVPose::rawPoseCallback(const uav_msgs::uav_pose::ConstPtr &msg) {
+
+    // Copy contents to std pose msg
+    stdRawPose_.header.stamp = msg->header.stamp;
+    stdRawPose_.pose.pose.position = msg->position;
+    stdRawPose_.pose.pose.orientation = msg->orientation;
+
+    // Convert covariance types
+    uavCovariance_to_rosCovariance(msg, stdPose_.pose);
+
+    // Add offset
+    try {
+        stdPose_.pose.pose.position.x += offset_.at(0);
+        stdPose_.pose.pose.position.y += offset_.at(1);
+        stdPose_.pose.pose.position.z += offset_.at(2);
+
+        stdPose_.pose.covariance[0] += added_covariance_.at(0);
+        stdPose_.pose.covariance[7] += added_covariance_.at(1);
+        stdPose_.pose.covariance[14] += added_covariance_.at(2);
+    }
+    catch (std::out_of_range &oor) {
+        ROS_ERROR_STREAM("Couldn't add offset: " << oor.what());
+        return;
+    }
+
+    // Publish std pose msg
+    stdRawPosePub_.publish(stdRawPose_);
+
+}
+
 void tfFromUAVPose::dynamicReconfigureCallback(ReconfigureParamsConfig &config, uint32_t level) {
 
     ROS_INFO("Received reconfigure request");
     offset_ = {config.offsetX, config.offsetY, config.offsetZ};
     added_covariance_ = {config.covarianceX, config.covarianceY, config.covarianceZ};
+    throttleRate_ = config.throttleRate;
 
+    ROS_INFO_STREAM("ThrottleRate: " << throttleRate_);
     ROS_INFO_STREAM("Offset: [" << offset_.at(0) << ", " << offset_.at(1) << ", " << offset_.at(2) << "]");
     ROS_INFO_STREAM("Extra covariance: [" << added_covariance_.at(0) << ", " << added_covariance_.at(1) << ", " << added_covariance_.at(2) << "]");
 }

@@ -14,12 +14,16 @@
 
     <group ns="$(arg namespace)">
         <node pkg="tf_from_uav_pose" type="tf_from_uav_pose_node" name="tf_from_uav_pose" output="screen">
-            <param name="poseTopicName" value="pose/raw" />
+            <param name="poseTopicName" value="pose" />
+            <param name="rawPoseTopicName" value="pose/raw" />
             <param name="worldFrameID" value="world" />
             <param name="machineFrameID" value="machine_$(arg robotID)" />
             <param name="worldENUFrameID" value="world_ENU" />
             <param name="worldNWUFrameID" value="world_NWU" />
-            <param name="stdPoseTopicName" value="pose/raw/std" />
+            <param name="stdPoseTopicName" value="pose/corr/std" />
+            <param name="stdRawPoseTopicName" value="pose/raww/std" />
+            <param name="throttledPoseTopicName" value="throttledPose" />
+            <param name="throttleRate" value="10" type="double"/>
             <param name="cameraFrameID" value="machine_$(arg robotID)_camera_link" />
             <param name="cameraRGBOpticalFrameID" value="machine_$(arg robotID)_camera_rgb_optical_link" />
 
@@ -27,7 +31,7 @@
             <param if="$(arg cameraStaticPublish)" name="cameraStaticPublish/topic" value="camera/pose"/>
             <param if="$(arg cameraStaticPublish)" name="cameraStaticPublish/publish" value="true" type="bool"/>
             <!-- tx, ty, tz, qx, qy, qz, qw-->
-            <rosparam if="$(arg cameraStaticPublish)" param="cameraStaticPublish/TFParameters">[0.15, 0.0, 0.23, 0.0, -0.38, 0.0, 0.924]</rosparam>
+            <rosparam if="$(arg cameraStaticPublish)" param="cameraStaticPublish/TFParameters">[0.18, 0.0, -0.07, 0.0, -0.38, 0.0, 0.924]</rosparam>
             <param name="dontPublishTFs" value="$(arg dontPublishTFs)" type="bool"/>
 
             <param name="offsetX" value="$(arg offsetX)" type="double"/>
