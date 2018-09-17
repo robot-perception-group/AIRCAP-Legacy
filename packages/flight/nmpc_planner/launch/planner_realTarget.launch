@@ -32,14 +32,14 @@
     <!--     Old value = 5.0 -->
     <param name="INTERNAL_SUB_STEP" value="0.2" type="double" />
     
-    <param name="maxVelocityMagnitude" value="1.0" type="double" />
+    <param name="maxVelocityMagnitude" value="1.7" type="double" />
     
     <param name="tFlyToDestinationRadius" value="0.25" type="double" />
-    <param name="tFormationRepulGain" value="26.0" type="double" />
-    <param name="tGoalAttractionGain" value="5.0" type="double" />
-    <param name="neighborDistThreshold" value="8.0" type="double" />
-    <param name="distanceThresholdToTarget" value="5.0" type="double" />
-    <param name="copterDesiredHeightinNED" value="-5.0" type="double" />
+    <param name="tFormationRepulGain" value="35.0" type="double" />
+    <param name="tGoalAttractionGain" value="7.0" type="double" />
+    <param name="neighborDistThreshold" value="11.0" type="double" />
+    <param name="distanceThresholdToTarget" value="8.0" type="double" />
+    <param name="copterDesiredHeightinNED" value="-8.0" type="double" />
     
     
     <param name="copterPositionLimitX" value="25.0" type="double" />

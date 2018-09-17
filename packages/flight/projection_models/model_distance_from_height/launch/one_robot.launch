@@ -26,7 +26,7 @@
             <param name="height_model_mean" value="$(arg height_model/mean)" type="double"/>
             <param name="height_model_var" value="$(arg height_model/var)" type="double"/>
 
-            <param name="topics/robot" value="pose/raw/std" type="string"/>
+            <param name="topics/robot" value="pose/raww/std" type="string"/>
             <param name="topics/camera" value="camera/pose" type="string"/>
             <param name="topics/optical" value="camera/pose_optical" type="string"/>
 

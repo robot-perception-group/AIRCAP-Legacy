@@ -6,7 +6,7 @@
   <arg name="NUM_ROBOTS" default="2" />
  
      
-  <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="nmpc_planner" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
+  <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="nmpc_planner_Tangential" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
     <param name="uavPoseTopic" value="/firefly_" type="string" />
     <param name="uavPoseTopicSuffix" value="/ground_truth/pose_with_covariance" type="string" /> 
     
@@ -20,7 +20,7 @@
     <param name="HexaMotorCommandsTopic" value="/firefly_$(arg robotID)/command/motors" type="string" />
     <param name="selfNMPCStatusTopic" value="/firefly_$(arg robotID)/NMPCActive" type="string" />
     
-        <param name="objectGTTopic" value="/trackedTargetPose" type="string" />  
+        <param name="objectGTTopic" value="/actorpose" type="string" />  
 <!--     <param name="objectGTTopic" value="/virtual_target_square_motion" type="string" />  -->
     <param name="objectEstimatedStateTopic" value="/trackedObjectState_byRobot_$(arg robotID)" type="string" /> 
     
@@ -42,8 +42,8 @@
     <param name="maxObstacleRepulsionForce" value="0.7" type="double" />
     
     <param name="neighborDistThreshold" value="3.0" type="double" />
-    <param name="distanceThresholdToTarget" value="6.0" type="double" />    
-    <param name="copterDesiredHeightinNED" value="-3.0" type="double" />
+    <param name="distanceThresholdToTarget" value="5.0" type="double" />    
+    <param name="copterDesiredHeightinNED" value="-5.0" type="double" />
     
     
     <param name="copterPositionLimitX" value="25.0" type="double" />

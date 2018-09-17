@@ -44,7 +44,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  CATKIN_DEPENDS roscpp rospy
 CATKIN_DEPENDS roscpp rospy
-LIBRARIES nmpc_solver
+LIBRARIES nmpc_solver mpc_solver_SSRR
 )
 
 
@@ -56,20 +56,40 @@ INCLUDE_DIRECTORIES(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${Boost_INCLUDE
 # INCLUDE_DIRECTORIES(${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS}  ${IPOPT_INCLUDE_DIRS} ${generic_potential_field_INCLUDE_DIRS})
 
 add_library(nmpc_solver
-	include/solver/MPCsolver.cpp
-	include/solver/ldl.c 
-	include/solver/util.c 
-	include/solver/matrix_support.c  
-	include/solver/solver.c
+  include/solver/MPCsolver.cpp
+  include/solver/ldl.c
+  include/solver/util.c
+  include/solver/matrix_support.c
+  include/solver/solver.c
 )
 
-# add_library(nmpc_ipopt
-# 	src/nmpc_ipopt.cpp
-# )
+add_library(mpc_solver_SSRR
+	include/solver_obstacles_SSRR/MPCsolver.cpp
+	include/solver_obstacles_SSRR/ldl.c
+	include/solver_obstacles_SSRR/util.c
+	include/solver_obstacles_SSRR/matrix_support.c
+	include/solver_obstacles_SSRR/solver.c
+)
+
+#add_library(mpc_solver_act
+#  include/solver_obstacles/MPCsolver.cpp
+#  include/solver_obstacles/ldl.c
+#  include/solver_obstacles/util.c
+#  include/solver_obstacles/matrix_support.c
+#  include/solver_obstacles/solver.c
+#)
 
 add_dependencies(nmpc_solver
         uav_msgs_generate_messages_cpp
 )
+
+add_dependencies(mpc_solver_SSRR
+        uav_msgs_generate_messages_cpp
+)
+
+#add_dependencies(mpc_solver_act
+#        uav_msgs_generate_messages_cpp
+#)
 
 target_link_libraries(nmpc_solver
         ${Boost_LIBRARIES}
@@ -77,15 +97,27 @@ target_link_libraries(nmpc_solver
         ${generic_potential_field_LIBRARIES}
 )
 
-# target_link_libraries(nmpc_ipopt
-#         ${Boost_LIBRARIES}
-#         ${catkin_LIBRARIES}
-#         ${IPOPT_LIBRARIES}
-# )
+target_link_libraries(mpc_solver_SSRR
+        ${Boost_LIBRARIES}
+        ${catkin_LIBRARIES}
+        ${generic_potential_field_LIBRARIES}
+)
+
+#target_link_libraries(mpc_solver_act
+#        ${Boost_LIBRARIES}
+#        ${catkin_LIBRARIES}
+#        ${generic_potential_field_LIBRARIES}
+#)
 
 
 add_executable(nmpc_planner src/nmpc_planner.cpp)
-add_dependencies(nmpc_planner ${PROJECT_NAME}_gencfg)
-target_link_libraries(nmpc_planner ${catkin_LIBRARIES} nmpc_solver)
-# target_link_libraries(nmpc_planner ${catkin_LIBRARIES} nmpc_solver nmpc_ipopt)
+add_executable(mpc_SSRR src/mpc_SSRR.cpp)
+add_executable(mpc_act src/mpc_act.cpp)
 
+add_dependencies(nmpc_planner ${PROJECT_NAME}_gencfg)
+add_dependencies(mpc_SSRR ${PROJECT_NAME}_gencfg)
+add_dependencies(mpc_act ${PROJECT_NAME}_gencfg)
+
+target_link_libraries(nmpc_planner ${catkin_LIBRARIES} nmpc_solver)
+target_link_libraries(mpc_SSRR ${catkin_LIBRARIES} mpc_solver_SSRR)
+target_link_libraries(mpc_act ${catkin_LIBRARIES} mpc_solver_SSRR)

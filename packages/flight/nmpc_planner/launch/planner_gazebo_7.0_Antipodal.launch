@@ -6,7 +6,7 @@
   <arg name="NUM_ROBOTS" default="2" />
  
      
-  <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="nmpc_planner" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
+  <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="antipodal" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
     <param name="uavPoseTopic" value="/firefly_" type="string" />
     <param name="uavPoseTopicSuffix" value="/ground_truth/pose_with_covariance" type="string" /> 
     
@@ -42,8 +42,8 @@
     <param name="maxObstacleRepulsionForce" value="0.7" type="double" />
     
     <param name="neighborDistThreshold" value="3.0" type="double" />
-    <param name="distanceThresholdToTarget" value="6.0" type="double" />    
-    <param name="copterDesiredHeightinNED" value="-3.0" type="double" />
+    <param name="distanceThresholdToTarget" value="3.0" type="double" />    
+    <param name="copterDesiredHeightinNED" value="-5.0" type="double" />
     
     
     <param name="copterPositionLimitX" value="25.0" type="double" />
