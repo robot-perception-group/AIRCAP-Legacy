@@ -25,7 +25,8 @@ ROS Packages:
 * /packages/flight -- mandatory packages needed for/on aerial vehicles
 * /packages/optional -- packages required for specific hardware (camera interface modules)
 * /packages/replay -- packages needed to replay data on the ground
-* /scrips/ -- start and stop scripts to run everything locally and remotely - see readme.txt in that directory
+* /scrips/ -- start and stop scripts to run everything locally and remotely on real robots - see readme.txt in that directory
+* /scrips/simulation -- start and stop scripts to run a swarm formation in gazebo simulation - needs additional dependencies
 
 
 # Compiling
@@ -43,6 +44,9 @@ build packages with catkin_make
 * [pose_cov_ops] (http://wiki.ros.org/pose_cov_op)
 * [rviz_plugin_covariance] (http://wiki.ros.org/rviz_plugin_covariance) (optional, for rviz isualization)
 
+##Additional Requirements for simulation:
+* [Gazebo] (http://gazebosim.org/) -- tested with Gazebo 8.6
+* [rotors_gazebo] (https://github.com/AIRCAP/rotors_gazebo) -- hint: add the entire tree to catkin_ws/src
 
 # Setup
 
@@ -119,12 +123,16 @@ An MPC based planner that allows the robots to follow the detected person.
 WARNING! This code is in a very early state of development and not considered stable.
 Like everything else use it at your own risk. You should always have means for manual override!!!
 What the planner does is:
- * Listens to /machine_&lt;ID&gt;/pose for ALL robots
+ * Listens to /machine_&lt;ID&gt;/pose for the robot is its running on
+ * Listens to /machine_&lt;ID&gt;/poseThrottled for all other robots
  * Listens to /machine_&lt;ID&gt;/target_tracker/target for the current person location estimate.
  * Exports Waypoint to fly to into /machine_&lt;ID&gt;/command <br/>
 Desired behaviour: All robots should keep a minimum distance from each other (implemented via potential field) and
 at a given distance to the tracked person, at a given altitude.
 
+## nmpc_planner mpc_act
+
+Active Perception convex MPC planner with collision avoidance as submitted in manuscript to ICRA2019
 
 # Additional Packages:
 
@@ -135,7 +143,10 @@ at a given distance to the tracked person, at a given altitude.
 * /packages/optional/basler_image_capture -- camera interface and video recording module for certain basler cameras
 * /packages/optional/ptgrey_image_capture -- camara interface and video recording module for FLIR Blackfly cameras
 * /packages/optional/gcsa_visualization -- Python scripts to create additional ROS messages for rviz visualization
-* /packages/replay/video_replay_only -- replays AVI files and timestamp files created by the basler and ptgrey video modules back into ROS
-
+* /packages/replay/video_replay_only -- replays AVI files and timestamp files created by the basler and ptgrey video modules back into ROS -- also includes a vidergrab node to record avi files from arbitrary sensor_msg/image streams in ROS with correct timestamps
+* /packages/simulation/aircap -- launch files to start ros nodes for software in the loop simulation
+* /packages/simulation/fake_communication_failure -- ROS node to simulate imperfect communication by dropping ROS messages
+* /packages/simulation/librepilot_gazebo_bridge -- ROS node to simulate librepilot flight controller using gsimulated azebo firefly MAV
+* /packages/simulation/random_moving_target -- ROS node to simulate a person in the simulation environment
 
 
