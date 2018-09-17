@@ -157,10 +157,12 @@ link_directories(
 # add_dependencies(librepilot ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
+add_executable(videograb_node src/videograb_node.cpp src/videograb.cpp src/libavhelper.c)
 add_executable(replay_node src/replay_node.cpp src/replay.cpp src/libavhelper.c )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
+add_dependencies(videograb_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(replay_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
@@ -173,6 +175,16 @@ target_link_libraries(replay_node
    ${SWSCALE_LIBRARIES}
    ${catkin_LIBRARIES}
 )
+
+target_link_libraries(videograb_node
+   ${SWRESAMPLE_LIBRARIES}
+   ${AVCODEC_LIBRARIES}
+   ${AVUTIL_LIBRARIES}
+   ${AVFORMAT_LIBRARIES}
+   ${SWSCALE_LIBRARIES}
+   ${catkin_LIBRARIES}
+)
+
 
 #############
 ## Install ##

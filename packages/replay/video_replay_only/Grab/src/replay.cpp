@@ -8,7 +8,6 @@
 #include <iostream>
 #include <sensor_msgs/Image.h>
 #include <std_msgs/UInt8.h>
-#include "frameptr.h"
 #include <boost/filesystem/fstream.hpp>
 #include <boost/thread.hpp>
 #include <unistd.h>
