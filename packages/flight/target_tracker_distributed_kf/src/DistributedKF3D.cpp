@@ -32,10 +32,17 @@ DistributedKF3D::DistributedKF3D() : pnh_("~"),
   pnh_.getParam("pub_topic", pub_topic);
   targetPub_ = nh_.advertise<PoseWithCovarianceStamped>(pub_topic, 10);
 
+  string velPub_topic{"target_tracker/twist"};
+  pnh_.getParam("velPub_topic", velPub_topic);
+  targetVelPub_ = nh_.advertise<TwistWithCovarianceStamped>(velPub_topic, 10);
+
+
+
   // Advertise publish topic
   string offset_topic{"target_tracker/offset"};
   pnh_.getParam("offset_topic", offset_topic);
   offsetPub_ = nh_.advertise<PoseWithCovarianceStamped>(offset_topic, 10);
+
 
   ROS_INFO_STREAM("Publishing to " << targetPub_.getTopic());
   ROS_INFO_STREAM("Offset Publishing to " << offsetPub_.getTopic());
@@ -72,20 +79,25 @@ void DistributedKF3D::initializeSubscribers() {
   pose_sub_ = nh_.subscribe(pose_topic, 300, &DistributedKF3D::predictAndPublish, this);
 
   // Measurement subscribers
+  string measurement_suffix_self{"/nonono"};
   string measurement_suffix{"/nonono"};
+  pnh_.getParam("measurement_topic_suffix_self", measurement_suffix_self);
   pnh_.getParam("measurement_topic_suffix", measurement_suffix);
 
-  self_sub_ = nh_.subscribe(measurement_suffix, 50, &DistributedKF3D::selfMeasurementCallback, this);
+  selfcallbackhandler= unique_ptr<Callbackhandler>(new Callbackhandler(this,true,robotID));
+  self_sub_ = nh_.subscribe(measurement_suffix_self, 50, &Callbackhandler::callback, selfcallbackhandler.get());
   ROS_INFO_STREAM("Registered self measurement subscriber for topic " << self_sub_.getTopic());
 
   for (int robot = 1; robot <= numRobots; robot++) {
     if (robot == robotID)
       continue;
 
+    std::shared_ptr<Callbackhandler> cb(new Callbackhandler(this,false,robot));
+    callbackhandlers.emplace_back(cb);
     const auto other_topic = "/machine_" + to_string(robot) + '/' + measurement_suffix;
     other_subs_.emplace_back(unique_ptr<ros::Subscriber>(
         new ros::Subscriber(nh_.subscribe(
-            other_topic, 50, &DistributedKF3D::otherMeasurementCallback, this))
+            other_topic, 50, &Callbackhandler::callback,cb.get()))
     ));
 
     ROS_INFO_STREAM(
@@ -106,7 +118,7 @@ void DistributedKF3D::initializeFilter() {
   std_msgs::Header h;
   h.frame_id = frame_id;
   h.stamp = ros::Time::now();
-  CacheElement first_element(h, state_size, true);
+  CacheElement first_element(h, state_size, true, 0);
   setUnknownInitial(first_element);
   first_element.frame_id = frame_id;
   state_cache_.insert_ordered(first_element);
@@ -114,24 +126,29 @@ void DistributedKF3D::initializeFilter() {
   ROS_INFO("The filter was (re)initialized");
 }
 
-void DistributedKF3D::selfMeasurementCallback(const PoseWithCovarianceStamped& msg) {
-  measurementsCallback(msg, true);
-}
+//void DistributedKF3D::selfMeasurementCallback(const PoseWithCovarianceStamped& msg) {
+//  measurementsCallback(msg, true);
+//      ROS_WARN("shouldhaveupdated...");
+//}
 
-void DistributedKF3D::otherMeasurementCallback(const PoseWithCovarianceStamped& msg) {
-  measurementsCallback(msg, false);
-}
+//void DistributedKF3D::otherMeasurementCallback(const PoseWithCovarianceStamped& msg) {
+//  measurementsCallback(msg, false);
+//}
 
-void DistributedKF3D::measurementsCallback(const PoseWithCovarianceStamped& msg, const bool isSelf) {
-  if (detectBackwardsTimeJump())
+void DistributedKF3D::measurementsCallback(const PoseWithCovarianceStamped& msg, const bool isSelf, const int robot) {
+  if (detectBackwardsTimeJump()) {
+      ROS_WARN("Backwardstimejump in cache - ignoring update");
     return;
+  }
 
-  if (state_cache_.empty())
+  if (state_cache_.empty()) {
+      ROS_WARN("Cache is empty - ignoring update");
     return;
+  }
 
 //    ROS_INFO("Measurement callback");
   // Create a new element for the cache
-  CacheElement new_element(state_size, msg, isSelf);
+  CacheElement new_element(state_size, msg, isSelf, robot);
 
   // Insert this element into cache, which returns the iterator at insert position
   auto it = state_cache_.insert_ordered(new_element);
@@ -151,13 +168,21 @@ void DistributedKF3D::measurementsCallback(const PoseWithCovarianceStamped& msg,
 
   // In a loop until we go through the whole cache, keep predicting and updating
   for (; it != state_cache_.end(); ++it) {
-    if (!predict(*(it - 1), *it))
+    if (!predict(*(it - 1), *it)) {
+      ROS_WARN("Prediction step failed!");
       return;
+    }
     if (it->measurements.size() > 0) {
-      if (!update(*it))
+      if (!update(*it)) {
+        ROS_WARN("Rewind/Update failed!");
         return;
+      }
     }
   }
+  //if (isSelf) {
+  //   ROS_INFO_STREAM(state_cache_);
+  //}
+
 }
 
 void DistributedKF3D::setUnknownInitial(CacheElement &elem) {
@@ -181,7 +206,7 @@ bool DistributedKF3D::predict(const CacheElement &in, CacheElement &out) {
 
   // Time past from one to next
   if (!out.stamp.isValid() || !in.stamp.isValid()) {
-    ROS_WARN_STREAM("One of the stamps is invalid, returning false from predict() without doing anything else");
+    ROS_WARN("One of the stamps is invalid, returning false from predict() without doing anything else");
     return false;
   }
 
@@ -267,7 +292,7 @@ bool DistributedKF3D::update(CacheElement &elem) {
 
   MatrixXd Q((int) measurement_state_size, (int) measurement_state_size);
   //populateJacobianQ(Q, closest_measurement);
-  Q <<  closest_measurement->covariance[0] , closest_measurement->covariance[1] , closest_measurement->covariance[2], 0.0 , 0.0 , 0.0 
+  Q <<  closest_measurement->covariance[0] , closest_measurement->covariance[1] , closest_measurement->covariance[2], 0.0 , 0.0 , 0.0
       , closest_measurement->covariance[6] , closest_measurement->covariance[7] , closest_measurement->covariance[8], 0.0 , 0.0 , 0.0
       , closest_measurement->covariance[12] , closest_measurement->covariance[13] , closest_measurement->covariance[14], 0.0 , 0.0 , 0.0
       , 0.0 , 0.0 , 0.0, elem.cov(0) + closest_measurement->covariance[0] , elem.cov(1) + closest_measurement->covariance[1] , elem.cov(2) + closest_measurement->covariance[2]
@@ -303,7 +328,7 @@ void DistributedKF3D::predictAndPublish(const uav_msgs::uav_poseConstPtr &pose) 
 
 //    ROS_INFO_STREAM(state_cache_);
   // Always self robot because predict is only called for self poses
-  CacheElement tmp_element(pose->header, state_size, true);
+  CacheElement tmp_element(pose->header, state_size, true,0);
 
   const auto last = state_cache_.back();
   if (!predict(last, tmp_element))
@@ -394,6 +419,12 @@ void DistributedKF3D::publishStateAndCov(const CacheElement &elem) {
 
   targetPub_.publish(msg_);
 
+  velMsg_.twist.twist.linear.x = elem.state[3];
+  velMsg_.twist.twist.linear.y = elem.state[4];
+  velMsg_.twist.twist.linear.z = elem.state[5];
+  targetVelPub_.publish(velMsg_);
+
+///*
   msg_.pose.pose.position.x = elem.state[6];
   msg_.pose.pose.position.y = elem.state[7];
   msg_.pose.pose.position.z = elem.state[8];
@@ -406,6 +437,7 @@ void DistributedKF3D::publishStateAndCov(const CacheElement &elem) {
   msg_.pose.covariance[2 * 6 + 0] = elem.cov(8 * 9 + 6);
   msg_.pose.covariance[2 * 6 + 1] = elem.cov(8 * 9 + 7);
   msg_.pose.covariance[2 * 6 + 2] = elem.cov(8 * 9 + 8);
+// */
 /*
   // This code would publish a zero offset with static variance regardless of
   // tracked offset state, as such effectively disabling offset correction and
@@ -422,6 +454,20 @@ void DistributedKF3D::publishStateAndCov(const CacheElement &elem) {
   msg_.pose.covariance[2 * 6 + 0] = 0;
   msg_.pose.covariance[2 * 6 + 1] = 0;
   msg_.pose.covariance[2 * 6 + 2] = 2;
+*/
+/*
+  msg_.pose.pose.position.x = 0;
+  msg_.pose.pose.position.y = 0;
+  msg_.pose.pose.position.z = 0;
+  msg_.pose.covariance[0 * 6 + 0] = 1e-6; // groundtruth
+  msg_.pose.covariance[0 * 6 + 1] = 0;
+  msg_.pose.covariance[0 * 6 + 2] = 0;
+  msg_.pose.covariance[1 * 6 + 0] = 0;
+  msg_.pose.covariance[1 * 6 + 1] = 1e-6;
+  msg_.pose.covariance[1 * 6 + 2] = 0;
+  msg_.pose.covariance[2 * 6 + 0] = 0;
+  msg_.pose.covariance[2 * 6 + 1] = 0;
+  msg_.pose.covariance[2 * 6 + 2] = 1e-4;
 */
 
   offsetPub_.publish(msg_);

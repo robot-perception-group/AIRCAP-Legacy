@@ -7,6 +7,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Geometry>
@@ -27,21 +28,22 @@ namespace target_tracker_distributed_kf {
 
   typedef struct CacheElement_s{
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-    
+
     ros::Time stamp;
     string frame_id;
     VectorXd state;
     MatrixXd cov;
     vector<shared_ptr<PoseWithCovariance>> measurements;
     bool isSelfRobot;
+    int robot;
 
     CacheElement_s() = delete; // at least use constructor with stamp
-    CacheElement_s(const std_msgs::Header& h, const int vecSize, const bool selfRobotFlag) :
-      stamp(h.stamp), frame_id(h.frame_id), state(VectorXd::Zero(vecSize)), cov(MatrixXd::Zero(vecSize, vecSize)), measurements(0), isSelfRobot(selfRobotFlag){
+    CacheElement_s(const std_msgs::Header& h, const int vecSize, const bool selfRobotFlag, const int robotID) :
+      stamp(h.stamp), frame_id(h.frame_id), state(VectorXd::Zero(vecSize)), cov(MatrixXd::Zero(vecSize, vecSize)), measurements(0), isSelfRobot(selfRobotFlag), robot(robotID){
       measurements.reserve(5);
     };
-    CacheElement_s(const int vecSize, const PoseWithCovarianceStamped& m, const bool selfRobotFlag) :
-      stamp(m.header.stamp), frame_id(m.header.frame_id), state(VectorXd::Zero(vecSize)), cov(MatrixXd::Zero(vecSize, vecSize)), measurements(0), isSelfRobot(selfRobotFlag){
+    CacheElement_s(const int vecSize, const PoseWithCovarianceStamped& m, const bool selfRobotFlag, const int robotID) :
+      stamp(m.header.stamp), frame_id(m.header.frame_id), state(VectorXd::Zero(vecSize)), cov(MatrixXd::Zero(vecSize, vecSize)), measurements(0), isSelfRobot(selfRobotFlag), robot(robotID){
       measurements.reserve(5);
       auto ptr = shared_ptr<PoseWithCovariance>(new PoseWithCovariance);
       ptr->pose = m.pose.pose;
@@ -88,8 +90,8 @@ namespace target_tracker_distributed_kf {
 
       // Look for the stamp just after elem's stamp
       for(; it != begin(); --it) {
-        if(it->stamp == elem.stamp){
-          // Two measurements for the same time, in this case we don't insert and instead add to the vector of measurements
+        if(it->stamp == elem.stamp && it->robot==elem.robot){
+          // Two measurements for the same time and robot, in this case we don't insert and instead add to the vector of measurements
           if(!elem.measurements.empty()) {
             auto ptr = shared_ptr<PoseWithCovariance>(new PoseWithCovariance);
             ptr->pose = elem.measurements[0]->pose;
@@ -117,12 +119,12 @@ namespace target_tracker_distributed_kf {
         stream << "Empty" << std::endl;
       else {
         stream << "Total of " << size() << " elements" << std::endl;
-        stream << "\tStamp \t\t\t#Measurements\tFrame\t\tState" << std::endl;
+        stream << "\tStamp \t\tRobotID\t#Measurements\tFrame\tSelf\tState" << std::endl;
       }
 
       IOFormat NoEndLineOnRowSep(StreamPrecision,0," ", " ");
       for(auto it=begin(); it != end(); ++it){
-        stream << "\t" << it->stamp << "\t" << it->measurements.size() << "\t" << it->frame_id << it->state.format(NoEndLineOnRowSep) << std::endl;
+        stream << "\t" << it->stamp << "\t" << it->robot << "\t" << it->measurements.size() << "\t\t" << it->frame_id << "\t" << it->isSelfRobot << it->state.format(NoEndLineOnRowSep) << std::endl;
       }
     }
   };
@@ -132,17 +134,30 @@ namespace target_tracker_distributed_kf {
     return stream;
   }
 
+
+  class Callbackhandler;
+
   class DistributedKF3D {
 
   private:
     ros::NodeHandle nh_, pnh_;
     std::vector<std::unique_ptr<ros::Subscriber>> other_subs_;
+    std::unique_ptr<Callbackhandler> selfcallbackhandler;
+    std::vector<std::shared_ptr<Callbackhandler>> callbackhandlers;
     ros::Subscriber pose_sub_;
     ros::Subscriber self_sub_;
     Cache state_cache_;
     ros::Publisher targetPub_;
+    ros::Publisher targetVelPub_;
+    ros::Publisher selftargetPub_;
+    ros::Publisher selftargetVelPub_;
     ros::Publisher offsetPub_;
+    ros::Publisher selfoffsetPub_;
+
     geometry_msgs::PoseWithCovarianceStamped msg_;
+    geometry_msgs::TwistWithCovarianceStamped velMsg_;
+    geometry_msgs::PoseWithCovarianceStamped selfMsg_;
+    geometry_msgs::TwistWithCovarianceStamped selfVelMsg_;    
     dynamic_reconfigure::Server<KalmanFilterParamsConfig> dyn_rec_server_;
 
     void initializeFilter();
@@ -165,9 +180,9 @@ namespace target_tracker_distributed_kf {
   public:
     DistributedKF3D();
 
-    void selfMeasurementCallback(const PoseWithCovarianceStamped&);
-    void otherMeasurementCallback(const PoseWithCovarianceStamped&);
-    void measurementsCallback(const PoseWithCovarianceStamped&, bool);
+    //void selfMeasurementCallback(const PoseWithCovarianceStamped&);
+    //void otherMeasurementCallback(const PoseWithCovarianceStamped&);
+    void measurementsCallback(const PoseWithCovarianceStamped&, const bool isSelf, const int robotID);
     void dynamicReconfigureCallback(KalmanFilterParamsConfig &config, uint32_t level);
 
     // Static matrices
@@ -196,8 +211,24 @@ namespace target_tracker_distributed_kf {
     double velocityDecayTime{3.0};
     double offsetDecayTime{30.0};
 
-      void initializeSubscribers();
+    void initializeSubscribers();
   };
+
+  class Callbackhandler {
+    public:
+    DistributedKF3D *parent;
+    Callbackhandler(DistributedKF3D *myparent,bool willbeself, int robot) {
+        parent=myparent;
+        isSelf=willbeself;
+        robotID=robot;
+    }
+    int robotID;
+    bool isSelf;
+    void callback(const PoseWithCovarianceStamped& msg) {
+      parent->measurementsCallback(msg, isSelf, robotID);
+    }
+  };
+
 
 }
 

@@ -7,8 +7,13 @@
 
     <arg name="cache_size" default="20"/>
     <arg name="pub_topic" default="target_tracker/pose"/>
+    <arg name="velPub_topic" default="target_tracker/twist"/>
     <arg name="offset_topic" default="target_tracker/offset"/>
+
+
     <arg name="pose_topic" default="pose"/>
+    <arg name="measurement_topic_suffix" default="object_detections/projected_to_world"/>
+    <arg name="measurement_topic_suffix_self" default="object_detections/projected_to_world"/>
 
     <arg name="reset_time_threshold" default="10"/>  <!--How long to wait before resetting if not receiving new measurements-->
 
@@ -18,17 +23,21 @@
 
             <param name="robotID" value="$(arg robotID)" type="int"/>
             <param name="numRobots" value="$(arg numRobots)" type="int"/>
-            <param name="measurement_topic_suffix" value="object_detections/projected_to_world" type="string"/>
+            <param name="measurement_topic_suffix" value="$(arg measurement_topic_suffix)" type="string"/>
+            <param name="measurement_topic_suffix_self" value="$(arg measurement_topic_suffix_self)" type="string"/>
 
             <param name="reset_time_threshold" value="$(arg reset_time_threshold)" type="double"/>
 
             <param name="cache_size" value="$(arg cache_size)" type="int"/>
             <param name="pub_topic" value="$(arg pub_topic)" type="string"/>
+            <param name="velPub_topic" value="$(arg velPub_topic)" type="string"/>
             <param name="offset_topic" value="$(arg offset_topic)" type="string"/>
+
             <param name="pose_topic" value="$(arg pose_topic)" type="string"/>
 
 	        <rosparam command="load" file="$(find target_tracker_distributed_kf)/cfg/tracker_configurable_parameters.yaml"/>
         </node>
+
     </group>
 
 </launch>
