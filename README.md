@@ -1,3 +1,4 @@
+![alt text](https://ps.is.tue.mpg.de/uploads/research_project/image/113/cover_1.png)
 AIRCAP: Aerial Outdoor Motion Capture --  Public Code Repository
 =================================================================
 
