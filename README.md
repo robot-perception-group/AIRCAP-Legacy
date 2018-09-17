@@ -43,7 +43,7 @@ build packages with catkin_make
 
 ##Additional Requirements for simulation:
 * [Gazebo] (http://gazebosim.org/) -- tested with Gazebo 8.6
-* [rotors_gazebo] (https://github.com/AIRCAP/rotors_gazebo) -- hint: add the entire tree to catkin_ws/src
+* [rotors_simulator] (https://github.com/AIRCAP/rotors_simulator) -- hint: add the entire tree to catkin_ws/src
 
 # Setup
 
