@@ -322,6 +322,10 @@ void NNDetector::imgCallback(const sensor_msgs::ImageConstPtr &msgp) {
         cv::rectangle(mat_img_, detection_min, detection_max, cv::Scalar(50, 50, 255), 3);
       }
     }
+  
+    // If max update rate is set, sleep for the rest of the time
+    if(max_update_force)
+      max_update_rate->sleep();
 
     // Publish the array msg if not empty
     if (!detection_array_msg.detections.empty())
@@ -374,9 +378,6 @@ void NNDetector::imgCallback(const sensor_msgs::ImageConstPtr &msgp) {
     }
   }
 
-  // If max update rate is set, sleep for the rest of the time
-  if(max_update_force)
-    max_update_rate->sleep();
 }
 
 void NNDetector::connectCallback() {

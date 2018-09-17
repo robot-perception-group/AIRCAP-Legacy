@@ -19,7 +19,7 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/time_sequencer.h>
 #include <map>
-#include <opencv-3.2.0-dev/opencv2/videoio.hpp>
+#include <opencv2/videoio.hpp>
 
 namespace neural_network_detector {
 

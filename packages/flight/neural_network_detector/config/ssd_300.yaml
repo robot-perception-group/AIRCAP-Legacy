@@ -2,7 +2,7 @@ desired_resolution:
   x: 300
   y: 300
 
-score_threshold: 0.5
+score_threshold: 0.3
 desired_class: 15
 
 variance:

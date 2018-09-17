@@ -57,7 +57,7 @@ void Overlay::startSubscribers() {
 
     // Img subscriber and time sequencer / delayer
     img_sub_.subscribe(nh_, img_topic, 3);
-    const auto delay = ros::Duration(0.3);
+    const auto delay = ros::Duration(0.4);
     pimg_delayer_.reset(new message_filters::TimeSequencer<sensor_msgs::Image>(img_sub_, delay, ros::Duration(0.01), 100));
     pimg_delayer_->registerCallback(&Overlay::imgCallback, this);
     ROS_INFO("Video is delayed by the TimeSequencer by %.2f seconds", delay.toSec());
@@ -153,7 +153,7 @@ void Overlay::imgCallback(const sensor_msgs::ImageConstPtr &msgp) {
 
     if(save_video_flag_){
         video_writer_->write(mat_img_);
-//        ROS_WARN("saving video");
+        ROS_WARN("saving video");
     }
 }
 
