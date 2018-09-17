@@ -1,18 +1,15 @@
-AIRCAP: Aerial Outdoor Motion Capture
-=====================================
+AIRCAP: Aerial Outdoor Motion Capture --  Public Code Repository
+=================================================================
 
-(MAVOCAP: [Micro Aerial Vehicles-based Outdoor motion CAPture])
+Project Webpage: [http://aircap.is.tuebingen.mpg.de](http://aircap.is.tuebingen.mpg.de)
 
-Webpage: [http://aircap.is.tuebingen.mpg.de](http://aircap.is.tuebingen.mpg.de)
-
-# Public Code Repository
-
+NEWS:  Nodes and packages specific to our submission to RA-L + ICRA 2019 added. Please scroll below for details.
 
 # Copyright and License
 
 All Code in this repository - unless otherwise stated in local license or code headers is
 
-Copyright 2017 Max Planck Institute for Intelligent Systems
+Copyright 2018 Max Planck Institute for Intelligent Systems
 
 Licensed under the terms of the GNU General Public Licence (GPL) v3 or higher.
 See: https://www.gnu.org/licenses/gpl-3.0.en.html
@@ -117,7 +114,8 @@ pose is updated from the flight controller It also tracks the offset between
 the flight controller's GPS derived pose estimate and the actual pose as
 estimated based on neural network detections.
 
-## nmpc_planner
+## nmpc_planner 
+This node corresponds to the work published in RA-L + IROS 2018. For our latest work on active perception see the next section and node.
 
 An MPC based planner that allows the robots to follow the detected person.
 WARNING! This code is in a very early state of development and not considered stable.
@@ -132,9 +130,13 @@ at a given distance to the tracked person, at a given altitude.
 
 ## nmpc_planner mpc_act
 
-Active Perception convex MPC planner with collision avoidance as submitted in manuscript to ICRA2019
+Active Perception-driven convex MPC planner with integrated collision avoidance as submitted in manuscript to RA-L + ICRA 2019.
+
+This package corresponds to the work submitted for review to RA-L + ICRA 2019. Packages other than nmpc_planner (see above) remain mostly the same.
 
 # Additional Packages:
+
+Some of these packages are specific to camera hardware, simulation environment, etc.
 
 * /packages/flight/CMakeModules -- compilation helper macros
 * /packages/flight/generic_potential_field -- used by nmpc_planner
