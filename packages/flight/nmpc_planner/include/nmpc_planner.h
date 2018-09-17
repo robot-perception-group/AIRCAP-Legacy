@@ -118,6 +118,7 @@ class Planner
   
   string uavPoseTopic;
   string uavPoseTopicSuffix;
+  string uavNeighborTopicSuffix;
   string outputPoseTopic;
   string virtualDestinationTopic;
   string uavSelfIMUTopic;
@@ -252,6 +253,7 @@ class Planner
       
       nh->getParam("uavPoseTopic", uavPoseTopic);
       nh->getParam("uavPoseTopicSuffix", uavPoseTopicSuffix);
+      nh->getParam("uavNeighborTopicSuffix", uavNeighborTopicSuffix);
       nh->getParam("outputPoseTopic", outputPoseTopic);
       nh->getParam("virtualDestinationTopic", virtualDestinationTopic);
       nh->getParam("uavSelfIMUTopic", uavSelfIMUTopic);
@@ -343,12 +345,12 @@ class Planner
           
             if(!usingSimulation)
             {  
-                Subscriber subMatePose = nh->subscribe<uav_msgs::uav_pose>(uavPoseTopic+boost::lexical_cast<string>(i)+uavPoseTopicSuffix, 3, boost::bind(&Planner::matePoseCallbackRealRobot,this, _1,i));
+                Subscriber subMatePose = nh->subscribe<geometry_msgs::PoseStamped>(uavPoseTopic+boost::lexical_cast<string>(i)+uavNeighborTopicSuffix, 3, boost::bind(&Planner::matePoseCallbackRealRobot,this, _1,i));
                 subMatePose_[i-1] = subMatePose; 
             }
             else
             {
-                Subscriber subMatePose = nh->subscribe<geometry_msgs::PoseWithCovarianceStamped>(uavPoseTopic+boost::lexical_cast<string>(i)+uavPoseTopicSuffix, 1000, boost::bind(&Planner::matePoseCallback,this, _1,i));
+                Subscriber subMatePose = nh->subscribe<geometry_msgs::PoseWithCovarianceStamped>(uavPoseTopic+boost::lexical_cast<string>(i)+uavNeighborTopicSuffix, 1000, boost::bind(&Planner::matePoseCallback,this, _1,i));
                 subMatePose_[i-1] = subMatePose; 
             }         
 	}
@@ -384,7 +386,7 @@ class Planner
     
     void selfPoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&, int);
     
-    void matePoseCallbackRealRobot(const uav_msgs::uav_pose::ConstPtr&, int);
+    void matePoseCallbackRealRobot(const geometry_msgs::PoseStamped::ConstPtr&, int);
     
     void matePoseCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr&, int);
   

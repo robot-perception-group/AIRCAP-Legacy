@@ -517,17 +517,15 @@ void Planner::updateObstaclesCallback(const geometry_msgs::PoseArray::ConstPtr& 
 }
 
 
-void Planner::matePoseCallbackRealRobot(const uav_msgs::uav_pose::ConstPtr& msg, int robID)
+void Planner::matePoseCallbackRealRobot(const geometry_msgs::PoseStamped::ConstPtr& msg, int robID)
 {
     //note that robID follows the 1-base, not zero base
     matePose.header = msg->header;
-    matePose.pose.pose.position = msg->position;
-    matePose.pose.pose.orientation = msg->orientation;
+    matePose.pose.pose = msg->pose;
     heardFromMate=true;
 
     matesPoses[robID-1].header = msg->header;
-    matesPoses[robID-1].pose.pose.position = msg->position;
-    matesPoses[robID-1].pose.pose.orientation = msg->orientation;
+    matesPoses[robID-1].pose.pose = msg->pose;
     heardFromMates[robID-1] = true;
 
     ///@HACK change NED to NWU

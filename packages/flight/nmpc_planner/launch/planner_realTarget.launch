@@ -8,7 +8,8 @@
   <group ns="machine_$(arg robotID)">     
   <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="nmpc_planner" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
     <param name="uavPoseTopic" value="/machine_" type="string" />
-    <param name="uavPoseTopicSuffix" value="/pose" type="string" /> 
+    <param name="uavPoseTopicSuffix" value="/pose" type="string" />
+    <param name="uavNeighborTopicSuffix" value="/throttledPose" type="string" /> 
     <param name="outputPoseTopic" value="/machine_$(arg robotID)/command" type="string" />    
     <param name="virtualDestinationTopic" value="/filtFlyTo_" type="string" />
     <param name="uavSelfIMUTopic" value="/firefly_$(arg robotID)/ground_truth/imu" type="string" />
