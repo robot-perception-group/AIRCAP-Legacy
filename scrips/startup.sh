@@ -65,6 +65,9 @@ screen -d -m -S DETECTION bash -i -c ./detection.sh
 echo "starting navigation..."
 screen -d -m -S NMPC_PLANNER bash -i -c ./navigation.sh
 
+echo "starting differential gps link..."
+screen -d -m -S DIFF_GPS bash -i -c ./diffgps.sh
+
 echo "starting video"
 screen -d -m -S VIDEO bash -i -c ./video.sh
 

@@ -4,9 +4,13 @@ USERNAME="porthos"
 
 FLIGHTNAME=$1
 CCOUNT=$2
+IGNOREMIS=$3
 if [ -z $CCOUNT ]; then
-	echo "usage $0 [flightname] [copter count]"
+	echo "usage $0 [flightname] [copter count] [ignoremissing]"
 	exit
+fi
+if [ "$IGNOREMIS" != "1" ]; then
+	IGNOREMIS=0
 fi
 
 export FLIGHTNAME="$FLIGHTNAME"
@@ -16,6 +20,7 @@ export CCOUNT=$CCOUNT
 echo "Starting Swarm with $CCOUNT robots for flight $FLIGHTNAME:"
 copters="$( cat robots.txt )"
 usedcopters=""
+workingcopters=""
 number=0
 for copter in $copters; do
 	if [ $number -lt $CCOUNT ]; then
@@ -38,8 +43,11 @@ for copter in $usedcopters; do
 	if [ $res != 0 ]; then
 		echo "FAIL!"
 		echo "Error: $copter not pingable"
-		exit 1
+		if [ $IGNOREMIS == 0 ]; then
+			exit 1
+		fi
 	else
+		workingcopters="$workingcopters $copter"
 		echo "OK"
 	fi
 done
@@ -49,6 +57,9 @@ echo "Starting everything:"
 number=0
 for copter in $usedcopters; do
 	number=$(( number+1 ))
+	if ! $( echo " $workingcopters " |grep -q " $copter " ); then
+		continue
+	fi
 	ssh $USERNAME@$copter "screen -d -m -S ALL bash -i -c \"cd src/catkin_ws;./startup.sh $FLIGHTNAME $number $CCOUNT\""
 done
 
@@ -59,6 +70,9 @@ while [ $all -eq 0 ]; do
 	number=0
 	for copter in $usedcopters; do
 		number=$(( number+1 ))
+		if ! $( echo " $workingcopters " |grep -q " $copter " ); then
+			continue
+		fi
 		ssh $USERNAME@$copter "[ -e ${LOGDIR}/current/faillog ] && echo fail" 2>/dev/null |grep -q fail
 		fail=$?
 		if [ $fail -eq 0 ]; then
@@ -94,6 +108,9 @@ while [ "$order" != "q" ]; do
 	number=0
 	for copter in $usedcopters; do
 		number=$(( number+1 ))
+		if ! $( echo " $workingcopters " |grep -q " $copter " ); then
+			continue
+		fi
 		echo -n "/machine_$number/ -- $copter -- "
 		ssh $USERNAME@$copter "[ -e ${LOGDIR}/current/faillog ] && echo fail" 2>/dev/null |grep -q fail
 		fail=$?
@@ -116,6 +133,9 @@ echo "Quit: Sending abort comand to all copters"
 number=0
 for copter in $usedcopters; do
 	number=$(( number+1 ))
+	if ! $( echo " $workingcopters " |grep -q " $copter " ); then
+		continue
+	fi
 	echo "/machine_$number/ -- $copter -- ABORT"
 	ssh $USERNAME@$copter "echo 1 >${LOGDIR}/current/abort" 2>/dev/null
 done
