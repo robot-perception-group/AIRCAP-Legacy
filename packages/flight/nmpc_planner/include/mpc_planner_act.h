@@ -62,7 +62,7 @@
 
 #define HUMAN_SPEED 0.5 // m/s
 
-#define POINT_OBSTACLES 1
+
 
 #define FORCE_LIMIT 8
 
@@ -182,6 +182,7 @@ class Planner
   geometry_msgs::PoseWithCovarianceStamped targetDetectionMsg;
   bool heardFromMate;
   bool targetDetected;
+
   // make a list of mate poses and pose trajectories. The position of a mate in the list is ID-1 (recall ID has base 0)
   vector<bool> heardFromMates;
   vector<geometry_msgs::PoseStamped> matesPoses;
@@ -259,6 +260,7 @@ class Planner
   double INTERNAL_SUB_STEP;
 
   bool usingSimulation;
+  bool POINT_OBSTACLES;
   bool useGTforTarget; // if this is true, NMPC will use GT of the target for feeding into the planner.
   bool useZeroAsFixedTarget; // use this when testing without real target in the real robot setting
 
@@ -368,6 +370,7 @@ class Planner
       nh->getParam("targetDetection", targetDetection);
       nh->getParam("obstacleTopicBase", obstacleTopicBase);
       nh->getParam("usingSimulation", usingSimulation);
+      nh->getParam("POINT_OBSTACLES", POINT_OBSTACLES);
       nh->getParam("useZeroAsFixedTarget", useZeroAsFixedTarget);
 
       nh->getParam("deltaT", deltaT);

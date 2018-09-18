@@ -5,6 +5,7 @@
   <arg name="robotID" default="1"/>
   <arg name="NUM_ROBOTS" default="2" />
   <arg name="NEIGHBOR_TOPIC" default="/throttledPose"/>
+  <arg name="usingSimulation" default="0" />
 
   <group ns="machine_$(arg robotID)">
   <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="mpc_act" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
@@ -29,7 +30,8 @@
     <param name="useGTforTarget" value="true" type="bool" />
     <param name="deltaT" value="0.1" type="double" />
 
-    <param name="usingSimulation" value="true" type="bool" />
+    <param name="usingSimulation" value="$(arg usingSimulation)" type="bool" />
+    <param name="POINT_OBSTACLES" value="true" type="bool" />
 
     <param name="INTERNAL_SUB_STEP" value="0.1" type="double" />
 

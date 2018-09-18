@@ -271,6 +271,35 @@ void Planner::avoidTeamMatesOnManifold()
 
 }
 
+double Planner::getPotential(double d, double threshold, double tPotFuncInfD, double tPotFuncGain) const {
+        //tPotFuncZeroD = threshold;
+  double z;
+  if (d < tPotFuncInfD)
+      z = (M_PI/2.0)*0.1/ (threshold - tPotFuncInfD);
+  else
+	    z = (M_PI/2.0) *((d - tPotFuncInfD)/ (threshold - tPotFuncInfD));
+	double cot_z = cos(z)/sin(z);
+	double retValue = (M_PI/2.0) * (1.0 / (threshold - tPotFuncInfD)) *
+			(cot_z + z - (M_PI/2.0));
+  if (d < threshold)
+	   return tPotFuncGain * retValue;
+  else
+     return 0;
+}
+
+Eigen::Vector3d Planner::force_clamping(Eigen::Vector3d force)
+{
+  /*for(int k=0;k<3;k++)
+  {
+    if (abs(force(k)) > FORCE_LIMIT)
+      force(k) = FORCE_LIMIT*force(k)/abs(force(k));
+  }*/
+  if (force.norm() > FORCE_LIMIT) {
+     force = (FORCE_LIMIT/(double)force.norm()) * force;
+  }
+  return force;
+}
+
 void Planner::avoidTeamMates()
 {
     ///@TODO this needs to be done neatly
@@ -319,7 +348,7 @@ void Planner::avoidTeamMates()
                 }
 
 
-                totalVel += formationRepulsiveGradientVector[j]->getPotential(neighborDist,neighborDistThreshold) * posDiffUnit * tFormationRepulGain;
+                totalVel += force_clamping(formationRepulsiveGradientVector[j]->getPotential(neighborDist,4) * posDiffUnit * tFormationRepulGain);
 
 
                 ROS_INFO("Distance to Neighbor = %f and threshold is = %f and repulsive potential = %f ",neighborDist,neighborDistThreshold,formationRepulsiveGradientVector[j]->getPotential(neighborDist,neighborDistThreshold));
@@ -327,6 +356,27 @@ void Planner::avoidTeamMates()
                 if(neighborDist<neighborDistThreshold)
                     atLeastOneMatePresent = true; //if no neighbour is in this range then we do not do mate avoidance.
 
+            }
+            if  (POINT_OBSTACLES)
+            {
+
+              for (int i=0; i < obstacles_length; i++)
+              {
+                double x_obs = obstacles_y[i];
+                double y_obs = -obstacles_x[i];
+                double z_obs = 0;
+                Position3D matePosition(x_obs,y_obs,z_obs);
+                Position3D posDiff = virtualPoint - matePosition;
+                posDiff(2) = 0; //@HACK : 2-D distance only
+                double neighborDist = posDiff.norm();
+                Position3D posDiffUnit = posDiff.normalized();
+                double potentialForce_repulsive = getPotential(neighborDist,4,1,50);
+                totalVel += force_clamping(potentialForce_repulsive * posDiffUnit );
+                Eigen::Vector3d temp = force_clamping(potentialForce_repulsive * posDiffUnit);
+                ROS_INFO("repulsive potential x= %f, y= %f, z=%f ",temp(0),temp(1),temp(2));
+
+
+              }
             }
 
         }
@@ -337,7 +387,7 @@ void Planner::avoidTeamMates()
 
           //totalVel += direction.normalized() * tGoalAttractionGain * pow((tFlyToDesVelocity(0)*tFlyToDesVelocity(0) + tFlyToDesVelocity(1)*tFlyToDesVelocity(1)),0.5);
           //totalVel += direction.normalized() * tGoalAttractionGain * 2.5;
-          totalVel += direction.normalized() * tGoalAttractionGain * maxVelocityMagnitude;
+          totalVel += force_clamping(direction.normalized() * tGoalAttractionGain * maxVelocityMagnitude);
 
           //totalVel += direction.normalized() * tGoalAttractionGain * goalAttractionGradientVector->getPotential(direction.norm());
 
