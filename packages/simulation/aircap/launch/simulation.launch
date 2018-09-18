@@ -63,7 +63,8 @@
     <include file="$(find nmpc_planner)/launch/planner_activeTracking.launch">
         <arg name="robotID" value="$(arg robotID)" />
         <arg name="NUM_ROBOTS" value="$(arg numRobots)" />
-        <arg name="NEIGHBOR_TOPIC" value="/throttledPoseComFail"/>
+	<arg name="NEIGHBOR_TOPIC" value="/throttledPoseComFail"/>
+	<arg name="usingSimulation" value="1" />
     </include>
 
     <include file="$(find librepilot_gazebo_bridge)/launch/default.launch">
