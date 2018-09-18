@@ -95,6 +95,11 @@ double Planner::getExpPotential(double d, double threshold, double tPotFuncGain)
 
 Eigen::Vector3d Planner::force_clamping(Eigen::Vector3d force)
 {
+  /*for(int k=0;k<3;k++)
+  {
+    if (abs(force(k)) > FORCE_LIMIT)
+      force(k) = FORCE_LIMIT*force(k)/abs(force(k));
+  }*/
   if (force.norm() > FORCE_LIMIT) {
      force = (FORCE_LIMIT/(double)force.norm()) * force;
   }
@@ -137,8 +142,8 @@ void Planner::avoidTeamMates_byComputingExtForce()
     Position3D posDiffT (tCurrentSelfPosition(0) - xT,tCurrentSelfPosition(1) - yT,0); // vector away from target
     double targetDist = posDiffT.norm();
     Position3D posDiffTUnit = posDiffT.normalized();
-    potentialForce_repulsive = getPotential(targetDist,distanceThresholdToTarget,targetGuaranteeThreshold,50); // away from target
-    totalForce += force_clamping((potentialForce_repulsive) * posDiffTUnit);
+    // potentialForce_repulsive = getPotential(targetDist,distanceThresholdToTarget,distanceThresholdToTarget/2,50); // away from target
+    // totalForce += force_clamping((potentialForce_repulsive) * posDiffTUnit);
     double thetaMate;
     double theta;
     double thetaDiff;
@@ -170,100 +175,10 @@ void Planner::avoidTeamMates_byComputingExtForce()
 
         double comm_failure_time_secs = (ros::Time::now() - matesPoses[j].header.stamp).toSec();
         double comm_failure_dilation = copterVelocityLimitX*comm_failure_time_secs*deltaT;
-        double obstacleAvoidanceThreshold = maxOffsetUncertaintyRadius + covariance_radius + comm_failure_dilation;
-        ROS_INFO("obstacleAvoidanceThreshold : %f", obstacleAvoidanceThreshold);
-        potentialForce_repulsive = getPotential(neighborDist,obstacleAvoidanceThreshold,neighborGuaranteeThreshold,50); //away from neighbor
+        potentialForce_repulsive = getPotential(neighborDist,4,1,50); //away from neighbor
         totalForce +=  force_clamping((potentialForce_repulsive) * posDiffUnit);
-
-
-        // // Angular Field
-         Vector2D mate2target(matePosition(0)-xT,matePosition(1)-yT);
-         Vector2D self2target(tCurrentSelfPosition(0)-xT,tCurrentSelfPosition(1)-yT);
-
-         thetaMate = atan2(mate2target(1),mate2target(0));
-         theta = atan2(self2target(1),self2target(0));
-
-         thetaMate = thetaMate ? thetaMate : 2*PI + thetaMate;
-         theta = theta ? theta : 2*PI + theta;
-
-         thetaDiff = abs(theta-thetaMate);
-
-        if (thetaDiff > PI)
-          {
-            thetaDiff = pow(2*PI - thetaDiff,2);
-          }
-
-        else
-        {
-          thetaDiff = pow(thetaDiff,2);
-        }
-        // ROS_INFO("thetaDiff: %f, mateID:%d", temp*180/PI,j);
-        potentialForce_angular = getPotential(thetaDiff,pow((2*PI/numRobots_),2),pow(activeGuaranteeThreshold,2),50);
-
-        Position3D tangent(-posDiffT(1),posDiffT(0),0);
-        Position3D tangentNeg(posDiffT(1),-posDiffT(0),0);
-        Position3D tangentUnit = tangent.normalized();
-        Position3D tangentUnitNeg = tangentNeg.normalized();
-        double c = 0.1; //small constant for non-zero surface active tracking force
-        if (posDiffUnit.dot(tangentUnit) > posDiffUnit.dot(tangentUnitNeg))
-          totalForce += force_clamping((potentialForce_angular) * tangentUnit *  (abs(targetDist - r)+c) );
-          // totalForce += (potentialForce_angular) * tangentUnit *  0;
-        else
-          totalForce += force_clamping((potentialForce_angular) * tangentUnitNeg *  (abs(targetDist - r)+c)) ;
-          // totalForce += (potentialForce_angular) * tangentUnitNeg *  0  ;
       }
     }
-    // ROS_INFO("");
-
-    //Emulated Point Cloud
-    // if (obstaclesFromRobots.poses.size()>0)
-    // {
-    //   for (int i=0; i < obstaclesFromRobots.poses.size(); i++)
-    //   {
-    //       x_obs = obstaclesFromRobots.poses[i].position.x;
-    //       y_obs = -obstaclesFromRobots.poses[i].position.y;
-    //       z_obs = -obstaclesFromRobots.poses[i].position.z;
-    //
-    //       Position3D matePosition(x_obs,y_obs,z_obs);
-    //       // Repulsive Field
-    //       Position3D posDiff = virtualPoint - matePosition;
-    //       posDiff(2) = 0; //@HACK : 2-D distance only
-    //       double neighborDist = posDiff.norm();
-    //       Position3D posDiffUnit = posDiff.normalized();
-    //
-    //       double potentialForce_repulsive = 0.0;
-    //
-    //       //total repulsive force
-    //       potentialForce_repulsive = getPotential(neighborDist,3,0.4,50);
-    //       totalForce += force_clamping((potentialForce_repulsive) * posDiffUnit * 0.1);
-    //       if (neighborDist < 3)
-    //       {
-    //         double thetaMate = atan2(matePosition(1)-yT,matePosition(0)-xT) ? atan2(matePosition(1)-yT,matePosition(0)-xT) : 2*PI + atan2(matePosition(1)-yT,matePosition(0)-xT);
-    //         double theta = atan2(tCurrentSelfPosition(1)-yT,tCurrentSelfPosition(0)-xT) ? atan2(tCurrentSelfPosition(1)-yT,tCurrentSelfPosition(0)-xT) : 2*PI + atan2(tCurrentSelfPosition(1)-yT,tCurrentSelfPosition(0)-xT);
-    //
-    //         double thetaDiff = abs(theta-thetaMate);
-    //        // double temp = thetaDiff;
-    //
-    //        if (thetaDiff > PI)
-    //        {
-    //          thetaDiff = pow(2*PI - thetaDiff,2);
-    //          // temp = 2*PI - temp;
-    //        }
-    //
-    //        else
-    //        {
-    //          thetaDiff = pow(thetaDiff,2);
-    //        }
-    //        // ROS_INFO("thetaDiff: %f, mateID:%d", temp*180/PI,j);
-    //        potentialForce_angular = getPotential(thetaDiff,pow(0.5,2),0,1);
-    //
-    //        Position3D tangent(-posDiffT(1),posDiffT(0),0);
-    //        Position3D tangentUnit = tangent.normalized();
-    //        totalForce += force_clamping((potentialForce_angular) * tangentUnit * 0.1 );
-    //      }
-    //       // ROS_INFO("neighborDist: %f", neighborDist);
-    //   }
-    // }
 
     if  (POINT_OBSTACLES)
     {
@@ -278,38 +193,12 @@ void Planner::avoidTeamMates_byComputingExtForce()
         posDiff(2) = 0; //@HACK : 2-D distance only
         double neighborDist = posDiff.norm();
         Position3D posDiffUnit = posDiff.normalized();
-        potentialForce_repulsive = getPotential(neighborDist,neighborDistThreshold+covariance_radius,obstacleGuaranteeThreshold,50);
+        potentialForce_repulsive = getPotential(neighborDist,4,1,50);
         totalForce += force_clamping((potentialForce_repulsive) * posDiffUnit );
-        if (neighborDist <= 3)
-        {
-          double thetaMate = atan2(matePosition(1)-yT,matePosition(0)-xT) ? atan2(matePosition(1)-yT,matePosition(0)-xT) : 2*PI + atan2(matePosition(1)-yT,matePosition(0)-xT);
-          double theta = atan2(tCurrentSelfPosition(1)-yT,tCurrentSelfPosition(0)-xT) ? atan2(tCurrentSelfPosition(1)-yT,tCurrentSelfPosition(0)-xT) : 2*PI + atan2(tCurrentSelfPosition(1)-yT,tCurrentSelfPosition(0)-xT);
-
-          double thetaDiff = abs(theta-thetaMate);
-         // double temp = thetaDiff;
-
-         if (thetaDiff > PI)
-           {
-             thetaDiff = pow(2*PI - thetaDiff,2);
-             // temp = 2*PI - temp;
-           }
-
-         else
-         {
-           thetaDiff = pow(thetaDiff,2);
-         }
-         // ROS_INFO("thetaDiff: %f, mateID:%d", temp*180/PI,j);
-         potentialForce_angular = getPotential(thetaDiff,pow(approachAngleThreshold,2),pow(activeGuaranteeThreshold,2),50);
-
-         Position3D tangent(-posDiffT(1),posDiffT(0),0);
-         Position3D tangentUnit = tangent.normalized();
-         totalForce += force_clamping((potentialForce_angular) * tangentUnit );
-       }
-        // ROS_INFO("neighborDist: %f", neighborDist);
       }
     }
 
-    if(std::isfinite(totalForce.norm()))
+    if(atLeastOneMatePresent && std::isfinite(totalForce.norm()))
     {
       obstacle_force(0,t) = totalForce(0);
       obstacle_force(1,t) = totalForce(1);
@@ -553,21 +442,14 @@ void Planner::selfPoseCallback(const uav_msgs::uav_pose::ConstPtr& msg, int robI
 void Planner::reconf_callback(nmpc_planner::nmpcPlannerParamsConfig &config) //R:Dynamic Reconfigure?
 {
   ROS_INFO("Reconfigure Request: neighborDistThreshold = %f  distanceThresholdToTarget = %f   copterDesiredHeightinNED = %f",config.neighborDistThreshold, config.distanceThresholdToTarget, config.copterDesiredHeightinNED);
-  ROS_INFO("Reconfigure Request: approachAngleThreshold = %f ",config.approachAngleThreshold);
+
 
   ROS_INFO("Reconfigure Request: INTERNAL_SUB_STEP = %f deltaT = %f",config.INTERNAL_SUB_STEP, config.deltaT);
   ROS_INFO("Reconfigure Request: Velocity Horizontal = %f Accelaration Horizontal = %f",config.copterVelocityLimitHorizontal, config.copterAccelarationLimitHorizontal);
   ROS_INFO("Reconfigure Request: Velocity Vertical = %f Accelaration Vertical = %f",config.copterVelocityLimitVertical, config.copterAccelarationLimitVertical);
   ROS_INFO("Reconfigure Request: maxOffsetUncertaintyRadius = %f ",config.maxOffsetUncertaintyRadius);
 
-  ROS_INFO("Reconfigure Request: targetGuaranteeThreshold = %f ",config.targetGuaranteeThreshold);
-  ROS_INFO("Reconfigure Request: activeGuaranteeThreshold = %f ",config.activeGuaranteeThreshold);
-  ROS_INFO("Reconfigure Request: obstacleGuaranteeThreshold = %f ",config.obstacleGuaranteeThreshold);
-  ROS_INFO("Reconfigure Request: neighborGuaranteeThreshold = %f ",config.neighborGuaranteeThreshold);
-
   neighborDistThreshold=config.neighborDistThreshold;
-
-  approachAngleThreshold = config.approachAngleThreshold;
 
   distanceThresholdToTarget=config.distanceThresholdToTarget;
 
@@ -576,13 +458,6 @@ void Planner::reconf_callback(nmpc_planner::nmpcPlannerParamsConfig &config) //R
   INTERNAL_SUB_STEP=config.INTERNAL_SUB_STEP;
 
   maxOffsetUncertaintyRadius=config.maxOffsetUncertaintyRadius;
-
-
-  targetGuaranteeThreshold = config.targetGuaranteeThreshold;
-  activeGuaranteeThreshold = config.activeGuaranteeThreshold;
-  obstacleGuaranteeThreshold = config.obstacleGuaranteeThreshold;
-  neighborGuaranteeThreshold = config.neighborGuaranteeThreshold;
-
   deltaT=config.deltaT;
   activeTrackingWeight=config.activeTrackingWeight;
   energyWeight=config.energyWeight;

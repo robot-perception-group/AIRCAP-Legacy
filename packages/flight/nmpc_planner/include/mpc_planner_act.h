@@ -227,13 +227,12 @@ class Planner
   Matrix2d selfCovariance = Matrix2d::Zero();
   //mav_msgs::MotorSpeed outputSpeed;
 
-//  std::vector<double> obstacles_x = {-9,  -9, 9,   9,-8, -8, 2, 6, 8.5, 4,   5, 12, 0, -5};
-//  std::vector<double> obstacles_y = { 0, 1.4, 0, 1.4, 6,7.4, 0, 7, 7,-9, -10.4, 10, 5, -5};
-//  std::vector<double> obstacles_x = {-14,-15,13,13,-12,-10,-2,3,4,8,12,0,-5};
-//  std::vector<double> obstacles_y = {-7,-3.5,-3,3,6,10,9,9.5,-9,-9,10,5,-7};
-    std::vector<double> obstacles_x = {0, 9, 9};
-    std::vector<double> obstacles_y = {0,-4, 4};
-  int obstacles_length = 3;
+  // std::vector<double> obstacles_x = {-9,  -9, 9,   9,-8, -8, 2, 6, 8.5, 4,   5, 12, 0, -5};
+  // std::vector<double> obstacles_y = { 0, 1.4, 0, 1.4, 6,7.4, 0, 7, 7,-9, -10.4, 10, 5, -5};
+  // std::vector<double> obstacles_x = {-14,-15,13,13,-12,-10,-2,3,4,8,12,0,-5};
+  // std::vector<double> obstacles_y = {-7,-3.5,-3,3,6,10,9,9.5,-9,-9,10,5,-7};
+  // int obstacles_length = 13;
+
 
   //NMPC related variables
   //SmartPtr<NMPC_IPOPT> mynlp;
@@ -266,8 +265,12 @@ class Planner
 
   double tFormationRepulGain;
   double tGoalAttractionGain;
+  double targetGuaranteeThreshold;
+  double activeGuaranteeThreshold;
+  double obstacleGuaranteeThreshold;
+  double neighborGuaranteeThreshold;
   double neighborDistThreshold;
-  double staticObsDistThreshold;
+  double approachAngleThreshold;
   double copterDesiredHeightinNED;
   double distanceThresholdToTarget;
   double maxOffsetUncertaintyRadius;
@@ -289,6 +292,10 @@ class Planner
 
   double activeTrackingWeight;
   double energyWeight;
+
+  std::vector<double> obstacles_x;
+  std::vector<double> obstacles_y;
+  double obstacles_length;
 
   float total_ang_force;
 
@@ -370,8 +377,12 @@ class Planner
 
       nh->getParam("tFormationRepulGain", tFormationRepulGain);
       nh->getParam("tGoalAttractionGain", tGoalAttractionGain);
+      nh->getParam("targetGuaranteeThreshold",targetGuaranteeThreshold );
+      nh->getParam("activeGuaranteeThreshold",activeGuaranteeThreshold );
+      nh->getParam("obstacleGuaranteeThreshold",obstacleGuaranteeThreshold );
+      nh->getParam("neighborGuaranteeThreshold",neighborGuaranteeThreshold );
       nh->getParam("neighborDistThreshold", neighborDistThreshold);
-      nh->getParam("staticObsDistThreshold", staticObsDistThreshold);
+      nh->getParam("approachAngleThreshold", approachAngleThreshold);
       nh->getParam("copterDesiredHeightinNED", copterDesiredHeightinNED);
       nh->getParam("distanceThresholdToTarget", distanceThresholdToTarget);
       nh->getParam("maxOffsetUncertaintyRadius", maxOffsetUncertaintyRadius);
@@ -392,6 +403,11 @@ class Planner
       nh->getParam("copterAccelarationLimitHorizontal", copterAccelarationLimitY);
       nh->getParam("copterAccelarationLimitVertical", copterAccelarationLimitZ);
 
+      nh->getParam("x_obs", obstacles_x);
+      nh->getParam("y_obs", obstacles_y);
+      if (obstacles_x.size() != obstacles_y.size())
+          ROS_INFO("dimension of x not equal to y. Obstacle avoidance will fail. Check yaml file");
+      obstacles_length = obstacles_x.size();
 
 
       // Bind dynamic reconfigure callback

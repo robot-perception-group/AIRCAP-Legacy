@@ -7,7 +7,7 @@
   <arg name="NEIGHBOR_TOPIC" default="/throttledPose"/>
 
   <group ns="machine_$(arg robotID)">
-  <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="mpc_act" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
+  <node name="nmpc_planner_$(arg robotID)" pkg="nmpc_planner" type="mpc_DQMPC" args="$(arg robotID) $(arg NUM_ROBOTS)" output="screen">
     <param name="uavPoseTopic" value="/machine_" type="string" />
     <param name="uavPoseTopicSuffix" value="/pose" type="string" />
     <param name="uavNeighborTopicSuffix" value="$(arg NEIGHBOR_TOPIC)" type="string" />
@@ -44,7 +44,7 @@
     <param name="copterDesiredHeightinNED" value="-8.0" type="double" />
 
     <param name="activeTrackingWeight" value="100.0" type="double" />
-    <param name="energyWeight" value="10.0" type="double" />
+    <param name="energyWeight" value="10" type="double" />
 
     <param name="copterPositionLimitX" value="20.0" type="double" />
     <param name="copterPositionLimitY" value="20.0" type="double" />
@@ -58,8 +58,6 @@
     <param name="copterAccelarationLimitVertical" value="11.0" type="double" />
 
     <param name="useZeroAsFixedTarget" value="false" type="bool" />
-
-    <rosparam command="load" file="$(find nmpc_planner)/cfg/obstacles_simulation.yaml" />
 
    </node>
    </group>
