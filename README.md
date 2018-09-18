@@ -26,8 +26,9 @@ ROS Packages:
 * /scrips/simulation -- start and stop scripts to run a swarm formation in gazebo simulation - needs additional dependencies
 
 # Compiling
-Link all flight and optional packages in catkin workspace on a flight capable node
-build packages with catkin_make
+Link or copy all flight and optional packages required into the *src* folder of your catkin workspace.
+
+Build packages with **catkin_make**
 
 ## Requirements:
 * [ROS] (http://wiki.ros.org/kinetic) 
