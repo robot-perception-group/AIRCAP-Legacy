@@ -2,7 +2,7 @@
 AIRCAP: Aerial Outdoor Motion Capture --  Public Code Repository
 =================================================================
 
-Project Webpage: [http://aircap.is.tuebingen.mpg.de](http://aircap.is.tuebingen.mpg.de)
+Research Group Webpage: [https://ps.is.tue.mpg.de/research_fields/robot-perception-group] (https://ps.is.tue.mpg.de/research_fields/robot-perception-group)
 
 NEWS:  Nodes and packages specific to our submission to RA-L + IROS 2019 added. Please scroll below for details.
 
