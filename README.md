@@ -131,15 +131,15 @@ at a given distance to the tracked person, at a given altitude.
 
 ## nmpc_planner mpc_act ( using launchfile planner_activeTracking.launch)
 
-Active Perception-driven convex MPC planner with integrated collision avoidance as submitted in manuscript to RA-L + ICRA 2019.
+Active Perception-driven convex MPC planner with integrated collision avoidance as submitted in manuscript to RA-L + IROS 2019.
 
-This package corresponds to the work submitted for review to RA-L + ICRA 2019. Packages other than nmpc_planner (see above) remain mostly the same.
+This package corresponds to the work submitted for review to RA-L + IROS 2019. Packages other than nmpc_planner (see above) remain mostly the same.
 
 ## nmpc_planner mpc_DQMPC ( using launchfile planner_DQMPC.launch)
 
 DQMPC based planner with integrated collision avoidance corresponding to the work to appear in SSRR 2018
 
-This trajectory planner was used in comparison in the work submitted for review to RA-L + ICRA 2019.
+This trajectory planner was used in comparison in the work submitted for review to RA-L + IROS 2019.
 
 
 # Additional Packages:
@@ -204,7 +204,7 @@ Results achieved in real world experiments always depend on the hardware in ques
   * In *packages/simulation/aircap/launch/simulation.launch* change *planner_activeTracking.launch* to *planner_realTarget.launch* to run the baseline nmpc_planner node, which runs an MPC based trajectory planner overlayed with a simple potential field based collision avoidance.
   * in *packages/flight/nmpc_planner/launch/pplanner_realTarget.launch* set *param name="POINT_OBSTACLES" value="false"*
 
-* RA-L + ICRA 2019 -- Work submitted for review by Rahul Tallamraju et al.<br/> The simulation experiments were conducted using a 3d world with and without static obstacles using multiple trajectory planners
+* RA-L + IROS 2019 -- Work submitted for review by Rahul Tallamraju et al.<br/> The simulation experiments were conducted using a 3d world with and without static obstacles using multiple trajectory planners
   * For our active perception approach, no code changes are necessary. This is run by default.
   * For the baseline approach by Eric Price et al.: In *packages/simulation/aircap/launch/simulation.launch* change *planner_activeTracking.launch* to *planner_realTarget.launch* to run the baseline nmpc_planner node, which runs an MPC based trajectory planner overlayed with a simple potential field based collision avoidance.
   * For the DQMPC approach (Tallamraju et al. SSRR 2018 ): In *packages/simulation/aircap/launch/simulation.launch* change *planner_activeTracking.launch* to *planner_DQMPC.launch* to run the dqmpc implementation of nmpc_planner.
